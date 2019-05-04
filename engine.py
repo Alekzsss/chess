@@ -15,5 +15,7 @@ def main():
         else:
             pl2.make_move()
             pl1.make_move()
+
+    print("game over")
 if __name__ == '__main__':
     main()

@@ -12,6 +12,7 @@ class Position:
     def populate(self, figure):
         self.resident = figure
 
+
     def clear(self):
         self.resident = None
 

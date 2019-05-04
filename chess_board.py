@@ -14,6 +14,8 @@ class ChessBoard:
 
     def set_figure(self, position, figure):
         self.positions[position].populate(figure)
+        return position
+
 
     def print_chessboard(self):
        print ("""

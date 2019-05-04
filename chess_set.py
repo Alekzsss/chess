@@ -8,16 +8,15 @@ class Chess_set:
         self.pieces = [Pawn(self, "white", item) for item in [i + "2" for i in "abcdefgh"]]
         self.pieces.extend([Pawn(self, "black", item) for item in [i + "7" for i in "abcdefgh"]])
 
-    def move(self, piece_id, new_position):
+    def move(self, piece_pos, new_position):
+        print([piece.position for piece in self.pieces])
+        # piece = [piece.position for piece in self.pieces if piece.position == piece_pos][0]
         for piece in self.pieces:
-            if piece.id == piece_id:
-                if new_position in self.board.positions:
-                    x1, y1 = piece.position
-                    x2, y2 = new_position
-                    return piece.move(new_position, x1, y1, x2, y2)
-
-
-
+            if piece.position == piece_pos:
+                x1, y1 = piece.position
+                x2, y2 = new_position
+                print(x1, y1, x2, y2, new_position)
+                return piece.move(new_position, x1, y1, x2, y2)
 
     # lst = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
     #        'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
