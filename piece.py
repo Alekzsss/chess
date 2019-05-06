@@ -3,7 +3,6 @@ class Piece:
         self.color = color
         self.chess_set = chess_set
         self.position = self.chess_set.board.set_figure(position, self)
-        # self.id = type(self).__name__.lower() + "_" + self.position
 
     def __repr__(self):
         return __class__.__name__
@@ -21,91 +20,128 @@ class Pawn(Piece):
     def __repr__(self):
         return self.color + " " + __class__.__name__
 
-
     def move(self, new_position, x1, y1, x2, y2):
         def move_figure():
             self.chess_set.board.positions[self.position].clear()
             self.position = new_position
-            print(self.position)
             self.chess_set.board.set_figure(new_position, self)
+
+        def remove_figure():
+            for piece in self.chess_set.pieces:
+                if piece.position == attacked.position:
+                    self.chess_set.pieces.remove(piece)
+                    print(f"{len(self.chess_set.pieces)} piece(s) remained")
+
+        def move_method(condition):
+            if condition:
+                move_figure()
+                self.first_move = False
+                print("first move = ", self.first_move)
+            else:
+                print(
+                    f"Wrong move! You choose {type(self).__name__.lower()} on position {self.position}")
+                return "wrong"
+
+        def attack_method(condition):
+            if condition:
+                remove_figure()
+                move_figure()
+
+                print("Your " + self.__class__.__name__ + " killed enemy's {0!r} at".format(attacked), attacked.position)
+            else:
+                print("Cannot attack! Make another move")
+                return "again"
+
+        def white_attack_condition(x1, y1, x2, y2):
+            return x2 == chr(ord(x1) + 1) and y2 == str(int(y1) + 1) or \
+                   x2 == chr(ord(x1) - 1) and y2 == str(int(y1) + 1)
+
+        def black_attack_condition(x1, y1, x2, y2):
+            return x2 == chr(ord(x1) - 1) and y2 == str(int(y1) - 1) or \
+                   x2 == chr(ord(x1) + 1) and y2 == str(int(y1) - 1)
+
+        def white_condition2(x1, y1, x2, y2):
+            return x2 == x1 and y2 == str(int(y1) + 1)
+
+        def black_condition2(x1, y1, x2, y2):
+            return x2 == x1 and y2 == str(int(y1) - 1)
+
+        def white_condition(x1, y1, x2, y2):
+            return x2 == x1 and y2 == str(int(y1) + 1) or x2 == x1 and y2 == str(int(y1) + 2)
+
+        def black_condition(x1, y1, x2, y2):
+            return x2 == x1 and y2 == str(int(y1) - 1) or x2 == x1 and y2 == str(int(y1) - 2)
 
         attacked = self.chess_set.board.positions[new_position].resident
 
         if attacked != None:
-            print("attack")
+            print("сработал attack")
             if self.color == "white":
-                if x2 == chr(ord(x1) + 1) and y2 == str(int(y1) + 1) or \
-                        x2 == chr(ord(x1) - 1) and y2 == str(int(y1) + 1):
-                    # self.chess_set.pieces.remove(piece) for piece in self.chess_set.pieces if piece.position == attacked.position
-                    for piece in self.chess_set.pieces:
-                        if piece.position == attacked.position:
-                            self.chess_set.pieces.remove(piece)
-                            print(f"{len(self.chess_set.pieces)} piece(s) remained")
-                    move_figure()
-
-                    print("Your " + self.__class__.__name__ + " killed enemy's {0!r}".format(attacked))
-                else:
-                    print("Cannot attack! Make another move")
-                    return "again"
+                attack_method(white_attack_condition(x1, y1, x2, y2))
             else:
-                if x2 == chr(ord(x1) - 1) and y2 == str(int(y1) - 1) or \
-                        x2 == chr(ord(x1) + 1) and y2 == str(int(y1) - 1):
-                    # self.chess_set.pieces.remove(piece) for piece in self.chess_set.pieces if piece.position == attacked.position
-                    for piece in self.chess_set.pieces:
-                        if piece.position == attacked.position:
-                            self.chess_set.pieces.remove(piece)
-                            print(len(self.chess_set.pieces))
-                    move_figure()
-
-                    print("Your " + self.__class__.__name__ + " killed enemy's {0!r}".format(attacked))
-                else:
-                    print("Cannot attack! Make another move")
-                    return "again"
+                attack_method(black_attack_condition(x1, y1, x2, y2))
 
         else:
-            print("first move")
+            if self.first_move == False:
+                print("сработал second move")
+                if self.color == "white":
+                    move_method(white_condition2(x1, y1, x2, y2))
+                else:
+                    move_method(black_condition2(x1, y1, x2, y2))
 
             if self.first_move == True:
+                print("сработал first move")
                 if self.color == "white":
-                    if x2 == x1 and y2 == str(int(y1) + 1) or x2 == x1 and y2 == str(int(y1) + 2):
-                        move_figure()
-                        self.first_move = False
-                    else:
-                        print(f"Wrong move! You choose {type(self).__name__.lower()} on position {self.position}")
-                        return "wrong"
+                    move_method(white_condition(x1, y1, x2, y2))
                 else:
-                    if x2 == x1 and y2 == str(int(y1) - 1) or x2 == x1 and y2 == str(int(y1) - 2):
-                        move_figure()
-                        self.first_move = False
-                    else:
-                        print(f"Wrong move! You choose {type(self).__name__.lower()} on position {self.position}")
-                        return "wrong"
-
-
-
-            elif self.first_move == False:
-                print("second move")
-
-
-
-                if self.color == "white":
-                    if x2 == x1 and y2 == str(int(y1) + 1):
-                        move_figure()
-                    else:
-                        print(f"Wrong move! You choose {type(self).__name__.lower()} on position {self.position}")
-                        return "wrong"
-                else:
-                    if x2 == x1 and y2 == str(int(y1) - 1):
-                        move_figure()
-                    else:
-                        print(f"Wrong move! You choose {type(self).__name__.lower()} on position {self.position}")
-                        return "wrong"
-
+                    move_method(black_condition(x1, y1, x2, y2))
 
         if self.color == "black":
             self.chess_set.board.print_chessboard()
         else:
             self.chess_set.board.print_chessboard_b()
+
+
+    def move_check(self):
+        x1, y1 = self.position[0], self.position[1]
+        if self.color == "white":
+            new_pos = x1 + str(int(y1) + 1)
+            if self.chess_set.board.positions[new_pos].resident != None:
+                return False
+            else:
+                return True
+        else:
+            new_pos = x1 + str(int(y1) - 1)
+            if self.chess_set.board.positions[new_pos].resident != None:
+                return False
+            else:
+                return True
+
+    def attack_check(self):
+        x1, y1 = self.position[0], self.position[1]
+        if self.color == "white":
+            supposed_pos = [chr(ord(x1) + 1) + str(int(y1) + 1), chr(ord(x1) - 1) + str(int(y1) + 1)]
+            print("supposed_pos =", supposed_pos)
+            new_pos = [pos for pos in supposed_pos if pos in self.chess_set.board.positions]
+            print("new_pos =", new_pos)
+            l = []
+            for pos in new_pos:
+                l.append([self.chess_set.board.positions[pos].resident == None])
+            if all(l):
+                return False
+            else:
+                return True
+        else:
+            supposed_pos = [chr(ord(x1) - 1) + str(int(y1) - 1), chr(ord(x1) + 1) + str(int(y1) - 1)]
+            new_pos = [pos for pos in supposed_pos if pos in self.chess_set.board.positions]
+            print("new_pos =", new_pos)
+            l = []
+            for pos in new_pos:
+                l.append(self.chess_set.board.positions[pos].resident == None)
+            if all(l):
+                return False
+            else:
+                return True
 
 
 if __name__ == '__main__':

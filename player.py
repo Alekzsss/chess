@@ -18,6 +18,10 @@ class Player:
             for i in self._colors:
                 self.color = self._colors[i]
         else:
+            # def a():
+            #     print("Choose your color:", end="\n\n")
+            #     print("white - '1'")
+            #     print("black - '2'")
             color_num = input("""
 Choose your color:
 
@@ -41,12 +45,11 @@ black - "2"
     def __repr__(self):
         return self.name
 
-
     _first_call = True
 
     def make_move(self):
         if self._first_call == True:
-            print(f"Your turn {self.name}")
+            print(f"Your turn {self.name}({self.color})")
         else:
             print("Try another one")
         piece_position = input("Enter piece position :")
@@ -55,8 +58,6 @@ black - "2"
         while piece_position not in piece_positions:
             piece_position = input("It's not your piece or position mismatch. Enter right piece position :")
         else:
-            p_pos = piece_position
-            print(p_pos)
             def pos_to_go():
                 print('func "pos_to_go"')
                 position_to_go = input("Choose position to go:")
@@ -66,23 +67,60 @@ black - "2"
                     position_to_go = input("Position out of board! Choose another position:")
                 while position_to_go in piece_positions:
                     position_to_go = input("Oops there is your piece. Choose another position:")
-                # else:
                 print("2")
                 # print(position_to_go)
                 return position_to_go
 
-            print("3")
-            print("feedback")
-            feedback = self.chess_set.move(p_pos, pos_to_go())
-            while feedback == "again":
-                print(f"{self.name} сработал 'again'")
-                self._first_call = False
-                if self.make_move() != False:
-                    self._first_call = True
-            print("между wrong и False")
-            while feedback == "wrong":
-                print("сработал wrong")
-                self.chess_set.move(p_pos, pos_to_go())
+            print("check = ", self.chess_set.board.positions[piece_position].resident.move_check())
+            if self.chess_set.board.positions[piece_position].resident.move_check() != False:
+                print(piece_position)
+
+                # def pos_to_go():
+                #     print('func "pos_to_go"')
+                #     position_to_go = input("Choose position to go:")
+                #     print(position_to_go)
+                #     print("1")
+                #     while position_to_go not in self.chess_set.board.positions:
+                #         position_to_go = input("Position out of board! Choose another position:")
+                #     while position_to_go in piece_positions:
+                #         position_to_go = input("Oops there is your piece. Choose another position:")
+                #     print("2")
+                #     # print(position_to_go)
+                #     return position_to_go
+
+                print("3")
+                print("feedback")
+                feedback = self.chess_set.move(piece_position, pos_to_go())
+                print("feedback = ", feedback)
+                while feedback == "again":
+                    print(f"{self.name} сработал 'again'")
+                    self._first_call = False
+                    if self.make_move() != False:
+                        self._first_call = True
+
+                print("между wrong и False")
+                while feedback == "wrong":
+                    print("сработал wrong")
+                    feedback = self.chess_set.move(piece_position, pos_to_go())
+
+            else:
+                print("You cannot move")
+                print("check attack = ", self.chess_set.board.positions[piece_position].resident.attack_check())
+                if self.chess_set.board.positions[piece_position].resident.attack_check() != False:
+                    advice = input("""
+You can attack or choose another figure:
+                        
+    1 - to attack
+    2 - to choose another piece
+    """)
+
+                    if advice == "1":
+                        feedback = self.chess_set.move(piece_position, pos_to_go())
+                    else:
+                        self.make_move()
+                else:
+                    print("You cannot attack")
+                    self.make_move()
 
 
 if __name__ == '__main__':
