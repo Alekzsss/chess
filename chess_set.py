@@ -1,5 +1,5 @@
 from chess_board import ChessBoard
-from piece import Pawn
+from piece import Pawn, Rook
 
 
 class Chess_set:
@@ -7,35 +7,18 @@ class Chess_set:
         self.board = ChessBoard(self)
         self.pieces = [Pawn(self, "white", item) for item in [i + "2" for i in "abcdefgh"]]
         self.pieces.extend([Pawn(self, "black", item) for item in [i + "7" for i in "abcdefgh"]])
+        self.pieces.extend([Rook(self, "white", item) for item in ("a1", "h1")])
+        self.pieces.extend([Rook(self, "black", item) for item in ("a8", "h8")])
+
 
     def move(self, piece_pos, new_position):
-        print([piece.position for piece in self.pieces])
+        # print([piece.position for piece in self.pieces])
         # piece = [piece.position for piece in self.pieces if piece.position == piece_pos][0]
         for piece in self.pieces:
             if piece.position == piece_pos:
                 x1, y1 = piece.position
                 x2, y2 = new_position
-                print(x1, y1, x2, y2, new_position)
+                # print(x1, y1, x2, y2, new_position)
+                # print("result of piece.move =", piece.move(new_position, x1, y1, x2, y2))
                 return piece.move(new_position, x1, y1, x2, y2)
 
-    # lst = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
-    #        'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
-    #
-    # by_num = 4
-    #
-    # for x in range(0, len(lst), by_num):
-    #     if x + by_num > len(lst):
-    #         by_num = len(lst) - x
-    #
-    #     template = ' | '.join(['{:>2} - {}'] * by_num)
-    #     print(template.format(*[j for i in zip(range(x, x + by_num), lst[x:x + by_num]) for j in i]))
-
-
-
-# outer = [[1,2,3], [4,5,6], [7,8,9]]
-# new_list = [item for sublist in outer for item in sublist]
-# print(new_list)
-#
-# word = "abc"
-# print(word.center(100, "*"))
-# print(word[::-1])

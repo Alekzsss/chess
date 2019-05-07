@@ -5,7 +5,6 @@ def main():
     my_set = Chess_set()
     pl1 = Player(my_set)
     pl2 = Player(my_set)
-
     my_set.board.print_chessboard()
 
     while pl1.user_pieces and pl2.user_pieces:
