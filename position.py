@@ -12,6 +12,9 @@ class Position:
     def populate(self, figure):
         self.resident = figure
 
+    @property
+    def not_empty(self):
+        return self.resident != "   empty    "
 
     def clear(self):
         self.resident = "   empty    "
@@ -25,4 +28,3 @@ class Position:
 
 if __name__ == '__main__':
     pass
-

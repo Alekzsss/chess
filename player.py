@@ -3,44 +3,52 @@ from itertools import count
 
 class Player:
     _number = count(1)
-    _colors = {"1": "white", "2": "black"}
+    _colors = ["white", "black"]
     _names = []
 
     def __init__(self, chess_set):
         self.number = next(self._number)
-        self.name = input(f"Player {self.number} enter your name: ")
-        while len(self.name) < 1 or " " in self.name or self.name in self._names:
-            self.name = input(f"Player {self.number} enter right name: ")
-        self._names.append(self.name)
+        self.name = None
+        self.color = None
         self.chess_set = chess_set
+        self.user_pieces = [piece for piece in self.chess_set.pieces if self.color == piece.color]
 
-        if len(self._colors) == 1:
-            for i in self._colors:
-                self.color = self._colors[i]
-        else:
-            # def a():
-            #     print("Choose your color:", end="\n\n")
-            #     print("white - '1'")
-            #     print("black - '2'")
-            color_num = input("""
-Choose your color:
+        self.chess_set.players.append(self)
+        print(f"'{self.name}' you are playing on {self.color} side.", "\n") if self.number == 1 \
+            else print(f"'So you {self.name}' playing on {self.color} side.", "\n")  # print notification message to
+        # players
 
-white - "1"
-black - "2"
-""")
-            while color_num not in self._colors:
-                print("Oops, missprint!")
-                color_num = input("Choose another color")
+    @property
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self, value):
+        while not value:
+            value = input(f"Player {self.number} enter your name: ")
+        while len(value) < 1 or " " in value or value in self._names:
+            value = input(f"Player {self.number} enter right name: ")
+        self._name = value
+        self._names.append(self._name)
+
+    @property
+    def color(self):
+        return self._color
+
+    @color.setter
+    def color(self, value):
+        while not value:
+            if len(self._colors) == 1:
+                value = self._colors[0]
+                self._color = value
             else:
-                self.color = self._colors.pop(color_num)
-
-
-        self.user_pieces = {piece for piece in self.chess_set.pieces if self.color == piece.color}
-        # print(self.user_pieces)
-        if self.number == 1:
-            print(f"'{self.name}' you are playing on {self.color} side.", "\n")
-        else:
-            print(f"'So you {self.name}' playing on {self.color} side.", "\n")
+                color_num = int(input('Choose your color:\n\nwhite - "1"\nblack - "2"\n'))
+                while color_num not in (1, 2):
+                    print("Oops, missprint!")
+                    color_num = int(input("Choose another color"))
+                else:
+                    value = self._colors.pop(color_num - 1)
+                    self._color = value
 
     def __repr__(self):
         return self.name
@@ -53,66 +61,7 @@ black - "2"
         else:
             print("Try another one")
 
-        def print_board():
-            if self.color == "black":
-                self.chess_set.board.print_chessboard()
-            else:
-                self.chess_set.board.print_chessboard_b()
-
-        piece_position = input("Enter piece position :")
-        piece_positions = [piece.position for piece in self.user_pieces]
-        # print([piece.position for piece in self.user_pieces])
-        while piece_position not in piece_positions:
-            piece_position = input("It's not your piece or position mismatch. Enter right piece position :")
-        else:
-            def pos_to_go():
-                # print('func "pos_to_go"')
-                position_to_go = input("Choose position to go:")
-                while position_to_go not in self.chess_set.board.positions:
-                    position_to_go = input("Position out of board! Choose another position:")
-                while position_to_go in piece_positions:
-                    position_to_go = input("Oops there is your piece. Choose another position:")
-                return position_to_go
-
-            # print("check move = ", self.chess_set.board.positions[piece_position].resident.move_check())
-            if self.chess_set.board.positions[piece_position].resident.move_check() != False:
-                # print(piece_position)
-                # print("3")
-                # print("feedback")
-                feedback = self.chess_set.move(piece_position, pos_to_go())
-                # print("feedback = ", feedback)
-                while feedback == "again":
-                    # print(f"{self.name} сработал 'again'")
-                    self._first_call = False
-                    if self.make_move() != False:
-                        self._first_call = True
-
-                # print("между wrong и False")
-                while feedback == "wrong":
-                    # print("сработал wrong")
-                    feedback = self.chess_set.move(piece_position, pos_to_go())
-                print_board()
-
-
-            else:
-                print("You cannot move")
-                # print("check attack = ", self.chess_set.board.positions[piece_position].resident.attack_check())
-                if self.chess_set.board.positions[piece_position].resident.attack_check() != False:
-                    advice = input("""
-You can attack or choose another figure:
-                        
-    1 - to attack
-    2 - to choose another piece
-    """)
-
-                    if advice == "1":
-                        self.chess_set.move(piece_position, pos_to_go())
-                        print_board()
-                    else:
-                        self.make_move()
-                else:
-                    print("You cannot attack")
-                    self.make_move()
+        self.chess_set.move_piece(self)
 
 
 if __name__ == '__main__':
