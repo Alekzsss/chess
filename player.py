@@ -25,9 +25,17 @@ class Player:
     @name.setter
     def name(self, value):
         while not value:
-            value = input(f"Player {self.number} enter your name: ")
-        while len(value) < 1 or " " in value or value in self._names:
-            value = input(f"Player {self.number} enter right name: ")
+            message = f"Player {self.number} enter your name: "
+            while True:
+                try:
+                    value = input(message)
+                    if " " in value or value in self._names:
+                        raise Exception
+                except:
+                    print("Choose another name)")
+                    message = f"Player {self.number} enter right name: "
+                else:
+                    break
         self._name = value
         self._names.append(self._name)
 
@@ -42,25 +50,23 @@ class Player:
                 value = self._colors[0]
                 self._color = value
             else:
-                color_num = int(input('Choose your color:\n\nwhite - "1"\nblack - "2"\n'))
-                while color_num not in (1, 2):
-                    print("Oops, missprint!")
-                    color_num = int(input("Choose another color"))
-                else:
-                    value = self._colors.pop(color_num - 1)
-                    self._color = value
+                while True:
+                    try:
+                        color_num = int(input('Choose your color:\n\nwhite - "1"\nblack - "2"\n'))
+                        if color_num not in (1, 2):
+                            raise Exception
+                    except:
+                        print("Oops, missprint!")
+                    else:
+                        break
+                value = self._colors.pop(color_num - 1)
+                self._color = value
 
     def __repr__(self):
         return self.name
 
-    _first_call = True
-
     def make_move(self):
-        if self._first_call == True:
-            print(f"Your turn {self.name}({self.color})")
-        else:
-            print("Try another one")
-
+        print(f"Your turn {self.name}({self.color})")
         self.chess_set.move_piece(self)
 
 

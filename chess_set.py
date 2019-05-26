@@ -1,5 +1,5 @@
 from chess_board import ChessBoard
-from piece import Pawn, Rook
+from piece import Pawn, Rook, Bishop, Knight, King, Queen
 
 
 class ChessSet:
@@ -9,6 +9,12 @@ class ChessSet:
         self.pieces.extend([Pawn(self, "black", item) for item in [i + "7" for i in "abcdefgh"]])
         self.pieces.extend([Rook(self, "white", item) for item in ("a1", "h1")])
         self.pieces.extend([Rook(self, "black", item) for item in ("a8", "h8")])
+        self.pieces.extend([Bishop(self, "white", item) for item in ("c1", "f1")])
+        self.pieces.extend([Bishop(self, "black", item) for item in ("c8", "f8")])
+        self.pieces.extend([Knight(self, "white", item) for item in ("b1", "g1")])
+        self.pieces.extend([Knight(self, "black", item) for item in ("b8", "g8")])
+        self.pieces.extend([King(self, "white", "e1"), King(self, "black", "e8")])
+        self.pieces.extend([Queen(self, "white", "d1"), Queen(self, "black", "d8")])
         self.players = []
 
     def _piece_position(self, player):
@@ -32,11 +38,13 @@ class ChessSet:
         return piece_pos
 
     def _pos_to_go(self, player):
-        # print('func "_pos_to_go"')
-        message = "Choose position to go:"
+        message = "\nChoose position to go:\n('0' to choose another piece)\n"
         while True:
             position_to_go = input(message)
             try:
+                if position_to_go == "0":
+                    position_to_go = int(position_to_go)
+                    break
                 if position_to_go not in self.board.positions:
                     raise KeyError
                 elif position_to_go in [piece.position for piece in player.user_pieces]:
@@ -52,43 +60,38 @@ class ChessSet:
                 break
         return position_to_go
 
-    def print_board(self, player):
-        if player.color == "black":
-            self.board.print_chessboard()
-        else:
-            self.board.print_chessboard_b()
-
     def move_piece(self, player):
         piece_position = self._piece_position(player)
-        piece = [piece for piece in self.pieces if piece.position == piece_position][0]
-        position_resident = self.board.positions[piece_position].resident
-        if position_resident.can_move:
+        piece = self.board.positions[piece_position].resident
+        if piece.can_move:
             pos_to_go = self._pos_to_go(player)
-            # print(piece_position)
-            # print("3")
-            # print("feedback")
-            feedback = piece.move(piece_position, pos_to_go)
-            # print("feedback = ", feedback)
-            while feedback == "again":
-                # print(f"{self.name} сработал 'again'")
-                self._first_call = False
-                if self.move_piece(player):
-                    self._first_call = True
-
-            # print("между wrong и False")
-            while feedback == "wrong":
-                # print("сработал wrong")
+            if pos_to_go:  # checks if there is a position to move the piece
+                # if self.board.positions[pos_to_go].not_empty:
+                #     print("not empty")
                 feedback = piece.move(piece_position, pos_to_go)
-            self.print_board(player)
+                while feedback in ("again", "wrong"):
+                    if feedback == "again":
+                        feedback = None
+                        self.move_piece(player)
+                        continue
+                    elif feedback == "wrong":
+                        feedback = None
+                        posit_to_go = self._pos_to_go(player)
+                        if posit_to_go:
+                            feedback = piece.move(piece_position, posit_to_go)
+                        else:
+                            self.move_piece(player)
+                            return
+            else:
+                self.move_piece(player)
+                return
         else:
             print("You cannot move")
-            # print("check attack = ", position_resident.can_attack)
-            if position_resident.can_attack:
+            if piece.can_attack:
                 advice = input('"You can attack or choose another figure:"\n\n"1 - to attack"\n"'
                                '2 - to choose another piece"\n')
                 if advice == "1":
-                    piece.move(piece_position, self._pos_to_go(player)) # must be "pos_to_go" but due to use "else" now unreacheable
-                    self.print_board(player)
+                    piece.move(piece_position, self._pos_to_go(player))
                 else:
                     self.move_piece(player)
             else:

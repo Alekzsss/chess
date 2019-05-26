@@ -42,14 +42,29 @@ class Pawn(Piece):
     def _can_move_method(self, condition, value=False):
         all_appr_positions = []
         for pos in self.chess_set.board.positions:
-            if condition(self.position[0], self.position[1], pos[0], pos[1]) == True:
+            if condition(self.position[0], self.position[1], pos[0], pos[1]) is True:
                 all_appr_positions.append(pos)
         empty_pos = [p for p in all_appr_positions if self.chess_set.board.positions[p].not_empty == value]
-        print("empty_pos = ", empty_pos)
         return True if empty_pos else False
 
     def _can_attack_method(self, condition):
         return self._can_move_method(condition, value=True)
+
+    def _check_attack(self, position):
+        all_appr_positions = []
+        for pos in self.chess_set.board.positions:
+            if self.color == "white":
+                condition = self._white_attack_condition
+            else:
+                condition = self._black_attack_condition
+            if condition(self.position[0], self.position[1], pos[0], pos[1]) is True:
+                all_appr_positions.append(pos)
+        return True if position in all_appr_positions else False
+
+    # def check(self, pos, new_posit):
+
+
+
 
     def move(self, piece_position, new_position):
         x1, y1 = piece_position
@@ -62,20 +77,32 @@ class Pawn(Piece):
                     self.chess_set.pieces.remove(piece)
                     user = [user for user in self.chess_set.players if user.color == piece.color][0]
                     user.user_pieces.remove(piece)
+                    attacked = next_pos.resident
 
                 self.chess_set.board.positions[self.position].clear()
                 self.position = new_position
                 self.chess_set.board.set_figure(new_position, self)
                 self.first_move = False
                 if attack:
-                    print("Your " + type(self).__name__ + " killed enemy's {0!r} at".format(next_pos.resident),
+                    print("Your " + type(self).__name__ + " killed enemy's {0!r} at".format(attacked),
                           new_position)
                     print(f"{len(self.chess_set.pieces)} piece(s) remained")
+
+                if self.color == "white":
+                    self.chess_set.board.print_chessboard_b()
+                else:
+                    self.chess_set.board.print_chessboard()
             else:
                 if attack:
-                    print("Cannot attack! Make another move")
-                    return "again"
-
+                    print("\nThe piece is not in attack range!")
+                    advice = input("\n1 - to change position to go\n0 - to choose another piece\n:")
+                    while advice not in ("0", "1"):
+                        print("You enter wrong number!")
+                        advice = input("You must enter the right one: ")
+                    if advice == "1":
+                        return "wrong"
+                    else:
+                        return "again"
                 else:
                     print(f"Wrong move! You choose {type(self).__name__.lower()} on position {self.position}")
                     return "wrong"
@@ -83,31 +110,27 @@ class Pawn(Piece):
         next_pos = self.chess_set.board.positions[new_position]
 
         if next_pos.not_empty:
-            # print("сработал attack")
+
             if self.color == "white":
                 return _move_method(self._white_attack_condition(x1, y1, x2, y2), attack=True)
             else:
                 return _move_method(self._black_attack_condition(x1, y1, x2, y2), attack=True)
-
         else:
-            if not self.first_move:
-                # print("сработал second move")
-                if self.color == "white":
-                    return _move_method(self._white_condition(x1, y1, x2, y2))
-                else:
-                    return _move_method(self._black_condition(x1, y1, x2, y2))
-
             if self.first_move:
-                # print("сработал first move")
+
+                # if self.color == "white":
+                #     return self.check(pos, new_posit)
+
                 if self.color == "white":
                     return _move_method(self._white_first_condition(x1, y1, x2, y2))
                 else:
                     return _move_method(self._black_first_condition(x1, y1, x2, y2))
 
-        if self.color == "black":
-            self.chess_set.board.print_chessboard()
-        else:
-            self.chess_set.board.print_chessboard_b()
+            else:
+                if self.color == "white":
+                    return _move_method(self._white_condition(x1, y1, x2, y2))
+                else:
+                    return _move_method(self._black_condition(x1, y1, x2, y2))
 
     @property
     def can_move(self) -> bool:
@@ -117,7 +140,7 @@ class Pawn(Piece):
             return self._can_move_method(self._black_condition)
 
     @property
-    def can_attack(self):
+    def can_attack(self) -> bool:
         if self.color == "white":
             return self._can_attack_method(self._white_attack_condition)
         else:
@@ -148,9 +171,56 @@ class Rook(Pawn):
     def can_move(self):
         return self._can_move_method(self.universal_condition)\
 
+
     def __repr__(self):
         return " " + self.color + " " + __class__.__name__ + " "
 
 
-if __name__ == '__main__':
-    pass
+class Bishop(Rook):
+    def __init__(self, chess_set, color, position):
+        super().__init__(chess_set, color, position)
+        self.first_move = False
+
+    def universal_condition(self, x1, y1, x2, y2):
+        return abs(ord(x1) - ord(x2)) == abs(int(y1) - int(y2))
+
+    def __repr__(self):
+        return self.color + " " + __class__.__name__
+
+
+class Knight(Bishop):
+    def __init__(self, chess_set, color, position):
+        super().__init__(chess_set, color, position)
+        self.first_move = False
+
+    def universal_condition(self, x1, y1, x2, y2):
+        return abs(ord(x1) - ord(x2)) * 2 == abs(int(y1) - int(y2)) or \
+               abs(ord(x1) - ord(x2)) == abs(int(y1) - int(y2)) * 2
+
+    def __repr__(self):
+        return self.color + " " + __class__.__name__
+
+
+class King(Rook):
+    def __init__(self, chess_set, color, position):
+        super().__init__(chess_set, color, position)
+        self.first_move = False
+
+    def universal_condition(self, x1, y1, x2, y2):
+        return abs(ord(x1) - ord(x2)) == 1 or abs(int(y1) - int(y2)) == 1
+
+    def __repr__(self):
+        return " " + self.color + " " + __class__.__name__ + " "
+
+
+class Queen(Bishop):
+    def __init__(self, chess_set, color, position):
+        super().__init__(chess_set, color, position)
+        self.first_move = False
+
+    def universal_condition(self, x1, y1, x2, y2):
+        bishop_condition = super().universal_condition(x1, y1, x2, y2)
+        return bishop_condition or x1 == x2 or y1 == y2
+
+    def __repr__(self):
+        return " " + self.color + " " + __class__.__name__
