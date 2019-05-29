@@ -6,7 +6,7 @@ def main():
     my_set = ChessSet()
     pl1 = Player(my_set)
     pl2 = Player(my_set)
-    my_set.board.print_chessboard()
+    my_set.board.print_board()
 
     while pl1.user_pieces and pl2.user_pieces:
         if pl1.color == "white":

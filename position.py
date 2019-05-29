@@ -7,17 +7,17 @@ class Position:
     def __init__(self, board):
         self.board = board
         self.color = next(self._colors)
-        self.resident = "   empty    "
+        self.resident = "  "
 
     def populate(self, figure):
         self.resident = figure
 
     @property
-    def not_empty(self):
-        return self.resident != "   empty    "
+    def is_not_empty(self):
+        return self.resident != "  "
 
     def clear(self):
-        self.resident = "   empty    "
+        self.resident = "  "
 
     # def __call__(self, *ags, **kwargs):
     #     return self.resident
