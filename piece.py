@@ -194,6 +194,17 @@ class Pawn(Piece):
                 if condition(x1, y1, x2, y2):
                     self.chess_set.relocate_piece(self, new_position)
                     self.first_move = False
+                    if type(self).__name__ == "Pawn":
+                        if self.color == "white":
+                            if "8" in self.position:
+                                self.chess_set.add_piece(self, Queen)
+                                self.chess_set.delete_piece(self)
+                                print("now you're a queen")
+                        else:
+                            if "1" in self.position:
+                                self.chess_set.add_piece(self, Queen)
+                                self.chess_set.delete_piece(self)
+                                print("now you're a queen")
                     self.chess_set.board.print_chessboard(self)
                 else:
                     print(f"Wrong move! You choose {type(self).__name__.lower()} on position {self.position}")

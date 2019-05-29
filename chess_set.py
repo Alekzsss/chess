@@ -153,6 +153,7 @@ class ChessSet:
         user = [user for user in self.players if user.color == old_piece.color][0]
         new_piece = piece(self, old_piece.color, old_piece.position)
         user.user_pieces.extend([new_piece])
+        self.pieces.extend([new_piece])
 
     def delete_piece(self, piece):
         self.pieces.remove(piece)

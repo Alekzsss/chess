@@ -11,11 +11,16 @@ def main():
     while pl1.user_pieces and pl2.user_pieces:
         if pl1.color == "white":
             pl1.make_move()
-            pl2.make_move()
+            if pl2.user_pieces:
+                pl2.make_move()
+            else:
+                break
         else:
             pl2.make_move()
-            pl1.make_move()
-
+            if pl1.user_pieces:
+                pl1.make_move()
+            else:
+                break
     if pl1.user_pieces:
         print(f"{pl1.name} is winner")
     else:
