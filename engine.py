@@ -21,11 +21,12 @@ def main():
                 pl1.make_move()
             else:
                 break
+    message = "Congratulations '{}' is a winner!"
     if pl1.user_pieces:
-        print(f"{pl1.name} is winner")
+        print(message.format(pl1.name))
     else:
-        print(f"{pl2.name} is winner")
-    print("game over")
+        print(message.format(pl2.name))
+    print('\t\t\t"GAME OVER"')
 
 
 if __name__ == '__main__':

@@ -19,9 +19,6 @@ class Position:
     def clear(self):
         self.resident = "  "
 
-    # def __call__(self, *ags, **kwargs):
-    #     return self.resident
-
     def __repr__(self):
         return str(self.resident)
 

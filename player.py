@@ -65,8 +65,102 @@ class Player:
     def __repr__(self):
         return self.name
 
+    @property
+    def king(self):
+        return [piece for piece in self.user_pieces if type(piece).__name__ == "King" and piece.color == self.color][0]
+
     def make_move(self):
-        print(f"Your turn {self.name}({self.color})")
+        enemy_army = set(self.chess_set.pieces) - set(self.user_pieces)
+        # self_army_move_pos = [piece.move_positions() for piece in self.user_pieces if type(piece).__name__ != "King"]
+        # print(self_army_move_pos)
+        self_army_move_pos = set()
+        for piece in self.user_pieces:
+            if type(piece).__name__ != "King":
+                self_army_move_pos.update(piece.move_positions())
+        # print("self_army_move_pos =", self_army_move_pos)
+        # print("king move positions = ", self.king.move_positions())
+        # for piece in self.user_pieces:
+        #     print(type(piece).__name__, piece.move_positions())
+        self_army_attack_pos = set()
+        for piece in self.user_pieces:
+            if type(piece).__name__ != "King":
+                self_army_attack_pos.update(piece.attack_positions())
+        all_enemy_attack_pos = set()
+        for piece in enemy_army:
+            all_enemy_attack_pos.update(piece.attack_positions())
+        # print("enemy's attack = ", all_enemy_attack_pos)
+        # for piece in enemy_army:
+        #     print(type(piece).__name__, piece.attack_positions())
+        all_enemy_move_pos = set()
+        for piece in enemy_army:
+            all_enemy_move_pos.update(piece.move_positions())
+        # print("enemy's moves = ", all_enemy_move_pos)
+        check_makers = [piece for piece in enemy_army if self.king.position in piece.attack_positions()]
+
+
+        while True:
+            try:
+                if len(check_makers) == 1:
+                    check_maker = [p for p in check_makers][0]
+                    print("check_maker.position = ", check_maker.position)
+                    print("self.king.position in all_enemy_attack_pos = ", self.king.position in all_enemy_attack_pos)
+                    print("self.king.move_positions() - all_enemy_attack_pos == set()", self.king.move_positions() - all_enemy_attack_pos == set())
+                    print("self.king.move_positions() = ", self.king.move_positions(), "self_army_move_pos = ", self_army_move_pos)
+                    print("self.king.move_positions() & self_army_move_pos = ", self.king.move_positions() & self_army_move_pos)
+                    print("check_maker.position = ", check_maker.position, "self_army_attack_pos = ", self_army_attack_pos)
+                    print("check_makers in self_army_attack_pos = ", check_maker.position in self_army_attack_pos)
+                    print("type(check_maker).__name__ = ", type(check_maker).__name__)
+                    # if self.king.position in all_enemy_attack_pos and \
+                    #     check_maker.position in self.king.attack_positions() and \
+                    #     check_maker.position not in all_enemy_attack_pos:
+                    #     raise ValueError
+                    if self.king.position in all_enemy_attack_pos and \
+                            not check_maker.rear_cover(self.user_pieces) and \
+                            type(check_maker).__name__ == "Knight" and \
+                            self.king.move_positions() - all_enemy_attack_pos == set():
+                        raise ValueError
+                    elif self.king.position in all_enemy_attack_pos and \
+                            not check_maker.rear_cover(self.user_pieces) and \
+                            check_maker.position in self.king.move_positions() and \
+                            check_maker.position in all_enemy_attack_pos:
+                        raise ValueError
+                    elif self.king.position in all_enemy_attack_pos and \
+                            self.king.move_positions() - all_enemy_attack_pos == set() and \
+                            not check_maker.obstacles(self.king.position, all_enemy_move_pos) and \
+                            not check_maker.rear_cover(self.user_pieces) and \
+                            check_maker.position not in self.king.attack_positions():
+                        raise ValueError
+                    elif self.king.position in all_enemy_attack_pos:
+                        raise KeyError
+                elif len(check_makers) > 1:
+                    check_makers_pos = set()
+                    for piece in check_makers:
+                        check_makers_pos.update(piece.position())
+                    closest_enemy = self.king.attack_positions() & check_makers_pos
+                    if self.king in all_enemy_attack_pos and \
+                        closest_enemy == set() and \
+                        self.king.move_positions() - all_enemy_attack_pos == set():
+                        raise ValueError
+                    elif self.king in all_enemy_attack_pos and \
+                        closest_enemy != set() and \
+                        closest_enemy & all_enemy_attack_pos != set() and \
+                        self.king.move_positions() - all_enemy_attack_pos == set():
+                        raise ValueError
+                    elif self.king.position in all_enemy_attack_pos:
+                        raise KeyError
+            except ValueError:
+                print("CHECKMATE!!!")
+                self.user_pieces = []
+                return
+            except KeyError:
+                print(f"CHECK!!!\n{self.name} you need to hide your king!")
+                self.chess_set.move_piece(self)
+                return
+            else:
+                break
+        print('Yet no "Check"')
+
+        print(f"Your turn {self.name}({self.color})\n")
         self.chess_set.move_piece(self)
 
 

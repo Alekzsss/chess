@@ -8,37 +8,46 @@ class ChessSet:
         self.pieces = [Pawn(self, "white", item) for item in [i + "2" for i in "abcdefgh"]]
         self.pieces.extend([Pawn(self, "black", item) for item in [i + "7" for i in "abcdefgh"]])
         self.pieces.extend([Rook(self, "white", item) for item in ("a1", "h1")])
-        # self.pieces.extend([Rook(self, "black", item) for item in ("a8", "h8")])
-        # self.pieces.extend([Bishop(self, "white", item) for item in ("c1", "f1")])
-        # self.pieces.extend([Bishop(self, "black", item) for item in ("c8", "f8")])
-        # self.pieces.extend([Knight(self, "white", item) for item in ("b1", "g1")])
-        # self.pieces.extend([Knight(self, "black", item) for item in ("b8", "g8")])
-        # self.pieces.extend([King(self, "white", "e1"), King(self, "black", "e8"), Queen(self, "white", "d1"),
-        #                     Queen(self, "black", "d8")])
+        self.pieces.extend([Rook(self, "black", item) for item in ("a8", "h8")])
+        self.pieces.extend([Bishop(self, "white", item) for item in ("c1", "f1")])
+        self.pieces.extend([Bishop(self, "black", item) for item in ("c8", "f8")])
+        self.pieces.extend([Knight(self, "white", item) for item in ("b1", "g1")])
+        self.pieces.extend([Knight(self, "black", item) for item in ("b8", "g8")])
+        self.pieces.extend([King(self, "white", "e1"), King(self, "black", "e8"), Queen(self, "white", "d1"),
+                            Queen(self, "black", "d8")])
         self.players = []
 
-    def _piece_position(self, player):
-        message = "Enter piece position: "
-        while True:
-            piece_pos = input(message)
-            try:
-                if piece_pos not in self.board.positions:
-                    raise KeyError
-                elif piece_pos not in [piece.position for piece in player.user_pieces]:
-                    raise ValueError
-            except ValueError:
-                print("It's not your piece.")
-                message = "Enter position of your piece: "
-            except KeyError:
-                print("Position doesn't exist.")
-                message = "Enter right piece position: "
-                continue
-            else:
-                break
-        return piece_pos
+    def _piece_position(self, player, piece_pos=None):
+        if piece_pos == None:
+            message = "Enter piece position: "
+            while True:
+                piece_pos = input(message)
+                try:
+                    if piece_pos not in self.board.positions:
+                        raise KeyError
+                    elif piece_pos not in [piece.position for piece in player.user_pieces]:
+                        raise ValueError
+                except ValueError:
+                    print("It's not your piece.")
+                    message = "Enter position of your piece: "
+                except KeyError:
+                    print("Position doesn't exist.")
+                    message = "Enter right piece position: "
+                    continue
+                else:
+                    break
+            return piece_pos
+        else:
+            return piece_pos
 
     def _pos_to_go(self, player):
-        message = "\nChoose position to go:\n('0' to choose another piece)\n"
+        enemy_army = set(self.pieces) - set(player.user_pieces)
+        all_enemy_attack_pos = set()
+        for piece in enemy_army:
+            all_enemy_attack_pos.update(piece.attack_positions())
+
+
+        message = "Choose position to go:\n('0' to choose another piece)\n"
         while True:
             position_to_go = input(message)
             try:
@@ -49,12 +58,17 @@ class ChessSet:
                     raise KeyError
                 elif position_to_go in [piece.position for piece in player.user_pieces]:
                     raise ValueError
+                elif type(self).__name__ == "King" and position_to_go in all_enemy_attack_pos:
+                    raise IndexError
             except KeyError:
                 print("Position out of board!")
                 message = "Choose another position: "
             except ValueError:
                 print("Oops there is your piece.")
                 message = "Choose another position: "
+            except IndexError:
+                print("This position under enemy's attack!")
+                message = "Choose safe position: "
                 continue
             else:
                 break
@@ -63,50 +77,9 @@ class ChessSet:
     def move_piece(self, player):
         piece_position = self._piece_position(player)
         piece = self.board.positions[piece_position].resident
-        if piece.can_move:
+        if piece.move_positions():
             pos_to_go = self._pos_to_go(player)
-            if pos_to_go:  # checks if there is a position to move the piece     #  marker of the beginning of change
-                # if piece.check(piece_position, pos_to_go):
-                #     if self.board.positions[pos_to_go].not_empty:
-                #         print("\nThe piece is not in attack range!")
-                #         advice = input("\n1 - to change position to go\n0 - to choose another piece\n:")
-                #         while advice not in ("0", "1"):
-                #             print("You enter wrong number!")
-                #             advice = input("You must enter the right one: ")
-                #
-                #         if advice == "1":
-                #             posit_to_go = self._pos_to_go(player)
-                #             if posit_to_go:
-                #                 feedback = piece.move(piece_position, posit_to_go)
-                #             else:
-                #                 self.move_piece(player)
-                #                 return
-                #         else:
-                #             self.move_piece(player)
-                #             return
-                #
-                #     # feedback = piece.move(piece_position, pos_to_go)
-                #     # while feedback in ("again", "wrong"):
-                #     #     if feedback == "again":
-                #     #         feedback = None
-                #     #         self.move_piece(player)
-                #     #         continue
-                #     #     elif feedback == "wrong":
-                #     #         feedback = None
-                #     #         posit_to_go = self._pos_to_go(player)
-                #     #         if posit_to_go:
-                #     #             feedback = piece.move(piece_position, posit_to_go)
-                #     #         else:
-                #     #             self.move_piece(player)
-                #     #             return
-                # else:
-                #     print(f"Wrong move! You choose {type(piece).__name__.lower()} on position {piece_position}")
-                #     posit_to_go = self._pos_to_go(player)
-                #     if posit_to_go:
-                #         feedback = piece.move(piece_position, posit_to_go)
-                #     else:
-                #         self.move_piece(player)
-                #         return
+            if pos_to_go:  # checks if there is a position to move the piece
                 feedback = piece.move(piece_position, pos_to_go)
                 while True:
                     try:
@@ -114,6 +87,9 @@ class ChessSet:
                             raise ValueError
                         elif feedback == "wrong":
                             raise KeyError
+                        elif feedback == "check":
+                            pass
+                            print("You cannot move this way because of king check")
                     except ValueError:
                             feedback = None
                             self.move_piece(player)
@@ -133,7 +109,7 @@ class ChessSet:
                 return
         else:
             print("You cannot move")
-            if piece.can_attack:
+            if piece.attack_positions():
                 advice = input('"You can attack or choose another figure:"\n\n"1 - to attack"\n"'
                                '0 - to choose another piece"\n')
                 if advice == "1":
