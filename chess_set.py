@@ -13,8 +13,7 @@ class ChessSet:
         self.pieces.extend([Bishop(self, "black", item) for item in ("c8", "f8")])
         self.pieces.extend([Knight(self, "white", item) for item in ("b1", "g1")])
         self.pieces.extend([Knight(self, "black", item) for item in ("b8", "g8")])
-        self.pieces.extend([King(self, "white", "e1"), King(self, "black", "e8"), Queen(self, "white", "d1"),
-                            Queen(self, "black", "d8")])
+        self.pieces.extend([King(self, "white", "e1"), King(self, "black", "e8"), Queen(self, "white", "d1"), Queen(self, "black", "d8")])
         self.players = []
 
     def _piece_position(self, player, piece_pos=None):
@@ -25,7 +24,7 @@ class ChessSet:
                 try:
                     if piece_pos not in self.board.positions:
                         raise KeyError
-                    elif piece_pos not in [piece.position for piece in player.user_pieces]:
+                    elif piece_pos not in [piece.position for piece in player.pl_pieces]:
                         raise ValueError
                 except ValueError:
                     print("It's not your piece.")
@@ -41,7 +40,7 @@ class ChessSet:
             return piece_pos
 
     def _pos_to_go(self, player):
-        enemy_army = set(self.pieces) - set(player.user_pieces)
+        enemy_army = set(self.pieces) - set(player.pl_pieces)
         all_enemy_attack_pos = set()
         for piece in enemy_army:
             all_enemy_attack_pos.update(piece.attack_positions())
@@ -56,7 +55,7 @@ class ChessSet:
                     break
                 if position_to_go not in self.board.positions:
                     raise KeyError
-                elif position_to_go in [piece.position for piece in player.user_pieces]:
+                elif position_to_go in [piece.position for piece in player.pl_pieces]:
                     raise ValueError
                 elif type(self).__name__ == "King" and position_to_go in all_enemy_attack_pos:
                     raise IndexError
@@ -76,20 +75,115 @@ class ChessSet:
 
     def move_piece(self, player):
         piece_position = self._piece_position(player)
-        piece = self.board.positions[piece_position].resident
-        if piece.move_positions():
+        enemy_army = set(self.pieces) - set(player.pl_pieces)
+        all_enemy_attack_pos = set()
+        for piece in enemy_army:
+            all_enemy_attack_pos.update(piece.attack_positions())
+        pos_resident = self.board.positions[piece_position].resident
+        self_positions = [piece.position for piece in player.pl_pieces]
+        if type(pos_resident).__name__ == "King" and pos_resident.first_move == True:
+            rooks = [piece for piece in player.pl_pieces if type(piece).__name__ == "Rook" and piece.first_move and
+                     not piece.obstacles(piece_position, self_positions) and
+                     not piece.obstacles(piece_position, all_enemy_attack_pos)]
+            def piece_swap(figure, pos1, pos2):
+                self.relocate_piece(pos_resident, pos1)
+                self.relocate_piece(figure, pos2)
+                self.board.print_board_for_castling(pos_resident)
+            if len(rooks) == 1:
+                rook = rooks[0]
+                print(rooks)
+                while True:
+                    try:
+                        castl_query = int(input(f"Do you want to do castling with rook on '{rook.position}'?\n"
+                                                f"1 - to do castling\n0 - no\n"))
+                        if castl_query not in (0, 1):
+                            raise ValueError
+                        elif castl_query == 1:
+                            raise IndexError
+                        elif castl_query == 0:
+                            raise SyntaxError
+                    except ValueError:
+                        print("Oops, missprint!")
+                    except IndexError:
+                        if rook.color == "white":
+                            if "h" in rook.position:
+                                piece_swap(rook, "g1", "f1")
+                                break
+                            else:
+                                piece_swap(rook, "c1", "d1")
+                                break
+                        else:
+                            if "h" in rook.position:
+                                piece_swap(rook, "g8", "f8")
+                                break
+                            else:
+                                piece_swap(rook, "c8", "d8")
+                                break
+                    except SyntaxError:
+                        break
+            elif len(rooks) == 2:
+                rook1, rook2 = rooks
+                print("rook1.position = ", rook1.position,"rook2.position = ", rook2.position)
+                while True:
+                    try:
+                        castl_query = int(input(f"Do you want to do castling with rook on '{rook1.position}' or "
+                                                f"rook on '{rook2.position}'?\n"
+                                                f"1 - to do castling with rook on '{rook1.position}'\n"
+                                                f"2 - to do castling with rook on '{rook2.position}'\n"
+                                                f"0 - continue move\n"))
+                        if castl_query not in (0, 1, 2):
+                            raise ValueError
+                        elif castl_query == 1:
+                            raise IndexError
+                        elif castl_query == 2:
+                            raise NameError
+                        elif castl_query == 0:
+                            raise SyntaxError
+                    except ValueError:
+                        print("Oops, missprint!")
+                    except IndexError:
+                        if rook1.color == "white":
+                            if "h" in rook1.position:
+                                piece_swap(rook1, "g1", "f1")
+                                break
+                            else:
+                                piece_swap(rook1, "c1", "d1")
+                                break
+                        else:
+                            if "h" in rook1.position:
+                                piece_swap(rook1, "g8", "f8")
+                                break
+                            else:
+                                piece_swap(rook1, "c8", "d8")
+                                break
+                    except NameError:
+                        if rook2.color == "white":
+                            if "h" in rook2.position:
+                                piece_swap(rook2, "g1", "f1")
+                                break
+                            else:
+                                piece_swap(rook2, "c1", "d1")
+                                break
+                        else:
+                            if "h" in rook2.position:
+                                piece_swap(rook2, "g8", "f8")
+                                break
+                            else:
+                                piece_swap(rook2, "c8", "d8")
+                                break
+                    except SyntaxError:
+                        break
+
+        if pos_resident.move_positions():
             pos_to_go = self._pos_to_go(player)
             if pos_to_go:  # checks if there is a position to move the piece
-                feedback = piece.move(piece_position, pos_to_go)
+                feedback = pos_resident.move(piece_position, pos_to_go)
                 while True:
                     try:
                         if feedback == "again":
                             raise ValueError
                         elif feedback == "wrong":
                             raise KeyError
-                        elif feedback == "check":
-                            pass
-                            print("You cannot move this way because of king check")
                     except ValueError:
                             feedback = None
                             self.move_piece(player)
@@ -98,7 +192,7 @@ class ChessSet:
                             feedback = None
                             posit_to_go = self._pos_to_go(player)
                             if posit_to_go:
-                                feedback = piece.move(piece_position, posit_to_go)
+                                feedback = pos_resident.move(piece_position, posit_to_go)
                             else:
                                 self.move_piece(player)
                                 return
@@ -109,11 +203,11 @@ class ChessSet:
                 return
         else:
             print("You cannot move")
-            if piece.attack_positions():
+            if pos_resident.attack_positions():
                 advice = input('"You can attack or choose another figure:"\n\n"1 - to attack"\n"'
                                '0 - to choose another piece"\n')
                 if advice == "1":
-                    piece.move(piece_position, self._pos_to_go(player))
+                    pos_resident.move(piece_position, self._pos_to_go(player))
                 else:
                     self.move_piece(player)
             else:
@@ -128,10 +222,10 @@ class ChessSet:
     def add_piece(self, old_piece, piece):
         user = [user for user in self.players if user.color == old_piece.color][0]
         new_piece = piece(self, old_piece.color, old_piece.position)
-        user.user_pieces.extend([new_piece])
+        user.pl_pieces.extend([new_piece])
         self.pieces.extend([new_piece])
 
     def delete_piece(self, piece):
         self.pieces.remove(piece)
         user = [user for user in self.players if user.color == piece.color][0]
-        user.user_pieces.remove(piece)
+        user.pl_pieces.remove(piece)
