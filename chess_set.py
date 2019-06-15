@@ -45,7 +45,6 @@ class ChessSet:
         for piece in enemy_army:
             all_enemy_attack_pos.update(piece.attack_positions())
 
-
         message = "Choose position to go:\n('0' to choose another piece)\n"
         while True:
             position_to_go = input(message)
@@ -75,12 +74,14 @@ class ChessSet:
 
     def move_piece(self, player):
         piece_position = self._piece_position(player)
+
         enemy_army = set(self.pieces) - set(player.pl_pieces)
         all_enemy_attack_pos = set()
         for piece in enemy_army:
             all_enemy_attack_pos.update(piece.attack_positions())
         pos_resident = self.board.positions[piece_position].resident
         self_positions = [piece.position for piece in player.pl_pieces]
+
         if type(pos_resident).__name__ == "King" and pos_resident.first_move == True:
             rooks = [piece for piece in player.pl_pieces if type(piece).__name__ == "Rook" and piece.first_move and
                      not piece.obstacles(piece_position, self_positions) and
@@ -174,6 +175,55 @@ class ChessSet:
                     except SyntaxError:
                         break
 
+        enemy_player = [pl for pl in self.players if pl.color != pos_resident.color][0]
+        if type(pos_resident).__name__ == "Pawn" and enemy_player.move_history:
+            enemy_last_move = enemy_player.move_history[-1]
+            needed_pos = [pos for pos in self.board.positions if piece_position[1] == pos[1] and
+                            abs(ord(piece_position[0]) - ord(pos[0])) == 1 and
+                          self.board.positions[pos].is_not_empty and
+                          type(self.board.positions[pos].resident).__name__ == "Pawn" and
+                          self.board.positions[pos].resident.position not in self_positions and
+                          self.board.positions[pos].resident.position in enemy_last_move and
+                          abs(int(enemy_last_move[0][1]) - int(enemy_last_move[1][1])) == 2]
+            if needed_pos:
+                attacked_pos = needed_pos[0]
+                print(attacked_pos)
+                attacked_resident = self.board.positions[attacked_pos].resident
+                print("attacked figure = ", self.board.positions[attacked_pos])
+                while True:
+                    try:
+                        query = int(input(f"Do you wanna take on a pass figure on position '{attacked_pos}'\n"
+                                          f"1 - take figure\n0 - continue move\n"))
+                        if query not in (0, 1):
+                            raise ValueError
+                        elif query == 1:
+                            raise IndexError
+                        elif query == 0:
+                            raise SyntaxError
+                    except ValueError:
+                        print("Oops, missprint!")
+                    except IndexError:
+                        if pos_resident.color == "white":
+                            new_pos = attacked_pos[0] + str(int(attacked_pos[1]) + 1)
+                        else:
+                            new_pos = attacked_pos[0] + str(int(attacked_pos[1]) - 1)
+                        self.relocate_piece(pos_resident, new_pos)
+                        self.delete_piece(self.board.positions[attacked_pos].resident)
+                        print("Your " + type(pos_resident).__repr__(pos_resident) + " take on pass enemy's {0!r} at".format(attacked_resident),
+                              attacked_pos)
+                        print(f"{len(self.pieces)} piece(s) remained")
+                        self.board.print_chessboard(pos_resident)
+                        break
+                        # return
+                    except SyntaxError:
+                        break
+
+            # if attacked_pos.is_not_empty and type(attacked_pos.resident).__name__ == "Pawn" and \
+            #         attacked_pos.resident.position not in self_positions and \
+            #         attacked_pos.resident.position in enemy_last_move and \
+            #     abs(int(enemy_last_move[0][1]) - int(enemy_last_move[1][1])) == 2:
+            #     print("pos_resident.move_positions = ", pos_resident.move_positions())
+
         if pos_resident.move_positions():
             pos_to_go = self._pos_to_go(player)
             if pos_to_go:  # checks if there is a position to move the piece
@@ -227,5 +277,6 @@ class ChessSet:
 
     def delete_piece(self, piece):
         self.pieces.remove(piece)
-        user = [user for user in self.players if user.color == piece.color][0]
-        user.pl_pieces.remove(piece)
+        player = [player for player in self.players if player.color == piece.color][0]
+        player.pl_pieces.remove(piece)
+        self.board.positions[piece.position].clear()

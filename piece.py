@@ -15,6 +15,10 @@ class Piece:
     def player(self):
         return [player for player in self.chess_set.players if player.color == self.color][0]
 
+    @property
+    def self_army_pos(self):
+        return [piece.position for piece in self.player.pl_pieces]
+
 class Pawn(Piece):
     def __init__(self, chess_set, color, position):
         super().__init__(chess_set, color, position)
@@ -89,7 +93,9 @@ class Pawn(Piece):
                 print(f"{len(self.chess_set.pieces)} piece(s) remained")
                 figure_exchange()
                 self.player.move_history.append((old_position, new_position))
-                print("player.move_history = " , self.player.move_history)
+                print("player.move_history")
+                for i in self.player.move_history:
+                    print(i[0], "-", i[1])
                 self.chess_set.board.print_chessboard(self)
 
             else:
@@ -119,7 +125,9 @@ class Pawn(Piece):
                 self.first_move = False
                 figure_exchange()
                 self.player.move_history.append((old_position, new_position))
-                print("player.move_history = " , self.player.move_history)
+                print("player.move_history")
+                for i in self.player.move_history:
+                    print(i[0], "-", i[1])
                 self.chess_set.board.print_chessboard(self)
             else:
                 print(f"Wrong move! You choose {type(self).__name__.lower()} on position {self.position}")
@@ -150,7 +158,6 @@ class Pawn(Piece):
         all_positions = []
         obstacles = []
         enemy_pos = []
-        cutted_pos  = []
         for pos in self.chess_set.board.positions:
             if condition(self.position[0], self.position[1], pos[0], pos[1]) is True:
                 all_positions.append(pos)
@@ -160,17 +167,14 @@ class Pawn(Piece):
                             enemy_pos.append(pos)
                         else:
                             obstacles.append(pos)
-                            cutted_pos.append(pos)
                     else:
-                        if attack:
-                            obstacles.append(pos)
-                        cutted_pos.append(pos)
+                        obstacles.append(pos)
         # if type(self).__name__ == "Queen" and self.color == "white" and self.position == "a4" and attack==True:
         #     print("all_positions = ", all_positions)
         #     print("obstacles = ", obstacles)
         #     print("cutted_pos = ", cutted_pos)
         #     print("enemy_pos = ", enemy_pos)
-
+        cutted_pos  = []
         for obs_pos in obstacles:
             self_x = ord(self.position[0])
             self_y = int(self.position[1])
@@ -178,25 +182,24 @@ class Pawn(Piece):
             obs_y = int(obs_pos[1])
             if obs_x == self_x:
                 if obs_y - self_y > 0:
-                    cutted_pos.extend([p for p in all_positions if ord(p[0]) == obs_x and int(p[1]) > obs_y])
-                    # set(obstacles) - set(cutted_pos)
+                    cutted_pos.extend([p for p in all_positions if ord(p[0]) == obs_x and int(p[1]) >= obs_y])
                 elif self_y - obs_y > 0:
-                    cutted_pos.extend([p for p in all_positions if ord(p[0]) == obs_x and obs_y > int(p[1])])
+                    cutted_pos.extend([p for p in all_positions if ord(p[0]) == obs_x and obs_y >= int(p[1])])
             elif obs_y == self_y:
                 if obs_x - self_x > 0:
-                    cutted_pos.extend([p for p in all_positions if int(p[1]) == obs_y and ord(p[0]) > obs_x])
+                    cutted_pos.extend([p for p in all_positions if int(p[1]) == obs_y and ord(p[0]) >= obs_x])
                 elif self_x - obs_x > 0:
-                    cutted_pos.extend([p for p in all_positions if int(p[1]) == obs_y and obs_x > ord(p[0])])
+                    cutted_pos.extend([p for p in all_positions if int(p[1]) == obs_y and obs_x >= ord(p[0])])
             elif obs_x - self_x > 0:
                 if obs_y - self_y > 0:
-                    cutted_pos.extend([p for p in all_positions if ord(p[0]) > obs_x and int(p[1]) > obs_y])
+                    cutted_pos.extend([p for p in all_positions if ord(p[0]) >= obs_x and int(p[1]) >= obs_y])
                 elif self_y - obs_y > 0:
-                    cutted_pos.extend([p for p in all_positions if ord(p[0]) > obs_x and obs_y > int(p[1])])
+                    cutted_pos.extend([p for p in all_positions if ord(p[0]) >= obs_x and obs_y >= int(p[1])])
             elif self_x - obs_x > 0:
                 if obs_y - self_y > 0:
-                    cutted_pos.extend([p for p in all_positions if obs_x > ord(p[0]) and int(p[1]) > obs_y])
+                    cutted_pos.extend([p for p in all_positions if obs_x >= ord(p[0]) and int(p[1]) >= obs_y])
                 elif self_y - obs_y > 0:
-                    cutted_pos.extend([p for p in all_positions if obs_x > ord(p[0]) and obs_y > int(p[1])])
+                    cutted_pos.extend([p for p in all_positions if obs_x >= ord(p[0]) and obs_y >= int(p[1])])
         # if type(self).__name__ == "Queen" and self.color == "white" and self.position == "a4" and attack==True:
         #     print("cutted_pos after work with obstacles = ", cutted_pos)
         ignored_pos = set()

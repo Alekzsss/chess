@@ -105,9 +105,14 @@ class Player:
         return all_pos
 
     def make_move(self):
-        for piece in self.pl_pieces:
-            if type(piece).__name__ != "King":
-                print(type(piece).__name__, "=", piece.attack_positions())
+        # print("self move positions")
+        # for piece in self.pl_pieces:
+        #     if type(piece).__name__ != "King":
+        #         print(type(piece).__name__, "=", piece.move_positions())
+        # print("self attack positions")
+        # for piece in self.pl_pieces:
+        #     if type(piece).__name__ != "King":
+        #         print(type(piece).__name__, "=", piece.attack_positions())
         # self_army_move_pos = [piece.move_positions() for piece in self.pl_pieces if type(piece).__name__ != "King"]
         # print(self_army_move_pos)
         # self_army_move_pos = set()
