@@ -8,25 +8,18 @@ def main():
     pl2 = Player(my_set)
     my_set.board.print_board()
 
-    while pl1.pl_pieces and pl2.pl_pieces:
-        if pl1.color == "white":
-            pl1.make_move()
-            if pl2.pl_pieces:
-                pl2.make_move()
+    attacking, defending = pl1, pl2
+    while attacking.pl_pieces and defending.pl_pieces:
+        if attacking.color == "white":
+            attacking.make_move()
+            if defending.pl_pieces:
+                defending.make_move()
             else:
+                print("Congratulations '{}' is a winner!".format(attacking.name))
+                print('\t\t\t"GAME OVER"')
                 break
         else:
-            pl2.make_move()
-            if pl1.pl_pieces:
-                pl1.make_move()
-            else:
-                break
-    message = "Congratulations '{}' is a winner!"
-    if pl1.pl_pieces:
-        print(message.format(pl1.name))
-    else:
-        print(message.format(pl2.name))
-    print('\t\t\t"GAME OVER"')
+            attacking, defending = pl2, pl1
 
 
 if __name__ == '__main__':

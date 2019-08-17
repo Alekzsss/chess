@@ -19,6 +19,14 @@ class Player:
         # players
         self.move_history = []
 
+    # @property
+    # def pl_pieces(self):
+    #     return [piece for piece in self.chess_set.pieces if self.color == piece.color]
+
+    @property
+    def pieces_positions(self):
+        return [piece.position for piece in self.pl_pieces]
+
     @property
     def name(self):
         return self._name
@@ -71,6 +79,10 @@ class Player:
         return [piece for piece in self.pl_pieces if type(piece).__name__ == "King"][0]
 
     @property
+    def army_pos(self):
+        return [piece.position for piece in self.pl_pieces]
+
+    @property
     def army_move_pos(self):
         all_pos = set()
         for piece in self.pl_pieces:
@@ -86,18 +98,25 @@ class Player:
                 all_pos.update(piece.attack_positions())
         return all_pos
 
-    @property
+    @property  # return enemy`s all pieces
     def enemy_army(self):
         return set(self.chess_set.pieces) - set(self.pl_pieces)
 
-    @property
+    @property  # return all positions of enemy`s pieces
+    def all_enemy_pos(self):
+        all_enemy_pos = set()
+        for piece in self.enemy_army:
+            all_enemy_pos.add(piece.position)
+        return all_enemy_pos
+
+    @property  # return all positions that are under enemy`s attack
     def enemy_attack_pos(self):
         all_pos = set()
         for piece in self.enemy_army:
             all_pos.update(piece.attack_positions())
         return all_pos
 
-    @property
+    @property  # return all positions that enemy can move on
     def enemy_move_pos(self):
         all_pos = set()
         for piece in self.enemy_army:
@@ -105,40 +124,7 @@ class Player:
         return all_pos
 
     def make_move(self):
-        # print("self move positions")
-        # for piece in self.pl_pieces:
-        #     if type(piece).__name__ != "King":
-        #         print(type(piece).__name__, "=", piece.move_positions())
-        # print("self attack positions")
-        # for piece in self.pl_pieces:
-        #     if type(piece).__name__ != "King":
-        #         print(type(piece).__name__, "=", piece.attack_positions())
-        # self_army_move_pos = [piece.move_positions() for piece in self.pl_pieces if type(piece).__name__ != "King"]
-        # print(self_army_move_pos)
-        # self_army_move_pos = set()
-        # for piece in self.pl_pieces:
-        #     if type(piece).__name__ != "King":
-        #         self_army_move_pos.update(piece.move_positions())
-        # print("self_army_move_pos =", self_army_move_pos)
-        # print("king move positions = ", self.king.move_positions())
-        # for piece in self.pl_pieces:
-        #     print(type(piece).__name__, piece.move_positions())
-
-        # self_army_attack_pos = set()
-        # for piece in self.pl_pieces:
-        #     if type(piece).__name__ != "King":
-        #         self_army_attack_pos.update(piece.attack_positions())
-        # enemy_army = set(self.chess_set.pieces) - set(self.pl_pieces)
-        # all_enemy_attack_pos = set()
-        # for piece in enemy_army:
-        #     all_enemy_attack_pos.update(piece.attack_positions())
-        # print("enemy's attack = ", all_enemy_attack_pos)
-        # for piece in enemy_army:
-        #     print(type(piece).__name__, piece.attack_positions())
-        # all_enemy_move_pos = set()
-        # for piece in self.enemy_army:
-        #     all_enemy_move_pos.update(piece.move_positions())
-        # print("enemy's moves = ", all_enemy_move_pos)
+        # check for CHECK or CHECKMATE
         check_makers = [piece for piece in self.enemy_army if self.king.position in piece.attack_positions()]
         while True:
             try:
@@ -201,6 +187,7 @@ class Player:
         print('Yet no "Check"')
 
         print(f"Your turn {self.name}({self.color})\n")
+        # delegate move function to class "chess_set"
         self.chess_set.move_piece(self)
 
 

@@ -15,10 +15,6 @@ class Piece:
     def player(self):
         return [player for player in self.chess_set.players if player.color == self.color][0]
 
-    @property
-    def self_army_pos(self):
-        return [piece.position for piece in self.player.pl_pieces]
-
 class Pawn(Piece):
     def __init__(self, chess_set, color, position):
         super().__init__(chess_set, color, position)
@@ -60,34 +56,28 @@ class Pawn(Piece):
                     half_pos = "1"
 
                 if half_pos in self.position:
-                    self.chess_set.add_piece(self, Queen)
+                    self.chess_set.add_piece(self, Queen, self.player)
                     self.chess_set.delete_piece(self)
                     print("Now you're a queen!")
 
-        def check(old_pos):
-            enemy_army = set(self.chess_set.pieces) - set(self.player.pl_pieces)  #
-            all_enemy_attack_pos = set()
-            for piece in enemy_army:
-                all_enemy_attack_pos.update(piece.attack_positions())
-            king = [piece for piece in self.player.pl_pieces if type(piece).__name__ == "King"][0]
-            print("king position = ", king.position)
-            if king.position in all_enemy_attack_pos:
+        def check_for_CHECK():
+            print("king position = ", self.player.king.position)
+            if self.player.king.position in self.player.enemy_attack_pos:
                 print("At first you must protect the king!!!")
-                self.chess_set.relocate_piece(self, old_pos)
                 return True
             else:
                 return False
-
 
         def _attack_method():
             attacked = next_pos.resident
             if attacked.position in self.attack_positions():
                 old_position = self.position
-                attacked_piece = [piece for piece in self.chess_set.pieces if piece.position == new_position][0]
+                self.chess_set.delete_piece(attacked)
                 self.chess_set.relocate_piece(self, new_position)
-                if check(old_position):
+                if check_for_CHECK():
+                    self.chess_set.relocate_piece(self, old_position)
+                    self.chess_set.add_piece(attacked, type(attacked).__name__, self.player)
                     return "again"
-                self.chess_set.delete_piece(attacked_piece)
                 self.first_move = False
                 print("Your " + type(self).__repr__(self) + " killed enemy's {0!r} at".format(attacked), new_position)
                 print(f"{len(self.chess_set.pieces)} piece(s) remained")
@@ -120,7 +110,8 @@ class Pawn(Piece):
             if new_position in self.move_positions():
                 old_position = self.position
                 self.chess_set.relocate_piece(self, new_position)
-                if check(old_position):
+                if check_for_CHECK():
+                    self.chess_set.relocate_piece(self, old_position)
                     return "again"
                 self.first_move = False
                 figure_exchange()
@@ -259,54 +250,8 @@ class Pawn(Piece):
             #     print("if attack available_pos = ", available_pos)
         return set(all_positions) - set(self_positions) if type(self).__name__ == "Knight" else available_pos
 
-    # def axis_finder(self, pos_list, second_list=None):
-    #     if not second_list:
-    #         second_list = pos_list
-    #     added_pos = []
-    #     for obs_pos in pos_list:
-    #         x = ord(self.position[0])
-    #         y = int(self.position[1])
-    #         x2 = ord(obs_pos[0])
-    #         y2 = int(obs_pos[1])
-    #         if x2 - x == 0:
-    #             if y2 - y > 0:
-    #                 for p in second_list:
-    #                     if ord(p[0]) == x2 and int(p[1]) > y2:
-    #                         added_pos = p
-    #             elif y - y2 > 0:
-    #                 added_pos = [p for p in second_list if ord(p[0]) == x2 and y2 > int(p[1])]
-    #         elif y2 - y == 0:
-    #             if x2 - x > 0:
-    #                 added_pos = [p for p in second_list if int(p[1]) == y2 and ord(p[0]) > x2]
-    #             elif x - x2 > 0:
-    #                 added_pos = [p for p in second_list if int(p[1]) == y2 and x2 > ord(p[0])]
-    #         elif x2 - x > 0:
-    #             if y2 - y > 0:
-    #                 added_pos = [p for p in second_list if ord(p[0]) > x2 and int(p[1]) > y2]
-    #             elif y - y2 > 0:
-    #                 added_pos = [p for p in second_list if ord(p[0]) > x2 and y2 > int(p[1])]
-    #         elif x - x2 > 0:
-    #             if y2 - y > 0:
-    #                 added_pos = [p for p in second_list if x2 > ord(p[0]) and int(p[1]) > y2]
-    #             elif y - y2 > 0:
-    #                 added_pos = [p for p in second_list if x2 > ord(p[0]) and y2 > int(p[1])]
-    #     return added_pos
-
     def attack_positions(self):
         return self.move_positions(attack=True)
-    # @property
-    # def can_move(self) -> bool:
-    #     if self.color == "white":
-    #         return self._can_move_method(self._white_condition)
-    #     else:
-    #         return self._can_move_method(self._black_condition)
-    #
-    # @property
-    # def can_attack(self) -> bool:
-    #     if self.color == "white":
-    #         return self._can_attack_method(self._white_attack_condition)
-    #     else:
-    #         return self._can_attack_method(self._black_attack_condition)
 
     def obstacles(self, piece_pos, required_positions):
         x1, y1 = self.position
@@ -352,6 +297,7 @@ class Pawn(Piece):
                         appr_positions.append(pos)
         return appr_positions
 
+    # checks if one of user`s pieces lies in attack range by another piece of him
     def rear_cover(self, self_army):
         unit_attack_positions = []
         pieces_that_cover = []

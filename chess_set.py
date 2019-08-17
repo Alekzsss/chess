@@ -16,7 +16,7 @@ class ChessSet:
         self.pieces.extend([King(self, "white", "e1"), King(self, "black", "e8"), Queen(self, "white", "d1"), Queen(self, "black", "d8")])
         self.players = []
 
-    def _piece_position(self, player, piece_pos=None):
+    def _piece_position(self, player, piece_pos=None): #
         if piece_pos == None:
             message = "Enter piece position: "
             while True:
@@ -24,7 +24,7 @@ class ChessSet:
                 try:
                     if piece_pos not in self.board.positions:
                         raise KeyError
-                    elif piece_pos not in [piece.position for piece in player.pl_pieces]:
+                    elif piece_pos not in player.army_pos:
                         raise ValueError
                 except ValueError:
                     print("It's not your piece.")
@@ -40,11 +40,6 @@ class ChessSet:
             return piece_pos
 
     def _pos_to_go(self, player):
-        enemy_army = set(self.pieces) - set(player.pl_pieces)
-        all_enemy_attack_pos = set()
-        for piece in enemy_army:
-            all_enemy_attack_pos.update(piece.attack_positions())
-
         message = "Choose position to go:\n('0' to choose another piece)\n"
         while True:
             position_to_go = input(message)
@@ -54,9 +49,9 @@ class ChessSet:
                     break
                 if position_to_go not in self.board.positions:
                     raise KeyError
-                elif position_to_go in [piece.position for piece in player.pl_pieces]:
+                elif position_to_go in player.army_pos:
                     raise ValueError
-                elif type(self).__name__ == "King" and position_to_go in all_enemy_attack_pos:
+                elif type(self).__name__ == "King" and position_to_go in player.enemy_attack_pos:
                     raise IndexError
             except KeyError:
                 print("Position out of board!")
@@ -74,22 +69,20 @@ class ChessSet:
 
     def move_piece(self, player):
         piece_position = self._piece_position(player)
-
-        enemy_army = set(self.pieces) - set(player.pl_pieces)
-        all_enemy_attack_pos = set()
-        for piece in enemy_army:
-            all_enemy_attack_pos.update(piece.attack_positions())
         pos_resident = self.board.positions[piece_position].resident
-        self_positions = [piece.position for piece in player.pl_pieces]
 
+        # auxiliary function that swaps 2 figures and prints board
+        def piece_swap(figure, pos1, pos2):
+            self.relocate_piece(pos_resident, pos1)
+            self.relocate_piece(figure, pos2)
+            self.board.print_board_for_castling(pos_resident)
+
+        #checks if you can make castling
         if type(pos_resident).__name__ == "King" and pos_resident.first_move == True:
             rooks = [piece for piece in player.pl_pieces if type(piece).__name__ == "Rook" and piece.first_move and
-                     not piece.obstacles(piece_position, self_positions) and
-                     not piece.obstacles(piece_position, all_enemy_attack_pos)]
-            def piece_swap(figure, pos1, pos2):
-                self.relocate_piece(pos_resident, pos1)
-                self.relocate_piece(figure, pos2)
-                self.board.print_board_for_castling(pos_resident)
+                     not piece.obstacles(piece_position, player.army_pos) and
+                     not piece.obstacles(piece_position, player.enemy_attack_pos)]
+
             if len(rooks) == 1:
                 rook = rooks[0]
                 print(rooks)
@@ -175,6 +168,7 @@ class ChessSet:
                     except SyntaxError:
                         break
 
+        # take on a pass
         enemy_player = [pl for pl in self.players if pl.color != pos_resident.color][0]
         if type(pos_resident).__name__ == "Pawn" and enemy_player.move_history:
             enemy_last_move = enemy_player.move_history[-1]
@@ -182,7 +176,7 @@ class ChessSet:
                             abs(ord(piece_position[0]) - ord(pos[0])) == 1 and
                           self.board.positions[pos].is_not_empty and
                           type(self.board.positions[pos].resident).__name__ == "Pawn" and
-                          self.board.positions[pos].resident.position not in self_positions and
+                          self.board.positions[pos].resident.position not in player.army_pos and
                           self.board.positions[pos].resident.position in enemy_last_move and
                           abs(int(enemy_last_move[0][1]) - int(enemy_last_move[1][1])) == 2]
             if needed_pos:
@@ -218,12 +212,7 @@ class ChessSet:
                     except SyntaxError:
                         break
 
-            # if attacked_pos.is_not_empty and type(attacked_pos.resident).__name__ == "Pawn" and \
-            #         attacked_pos.resident.position not in self_positions and \
-            #         attacked_pos.resident.position in enemy_last_move and \
-            #     abs(int(enemy_last_move[0][1]) - int(enemy_last_move[1][1])) == 2:
-            #     print("pos_resident.move_positions = ", pos_resident.move_positions())
-
+        # continues main function
         if pos_resident.move_positions():
             pos_to_go = self._pos_to_go(player)
             if pos_to_go:  # checks if there is a position to move the piece
@@ -253,15 +242,27 @@ class ChessSet:
                 return
         else:
             print("You cannot move")
-            if pos_resident.attack_positions():
+            pos_with_enemy = player.all_enemy_pos & pos_resident.attack_positions()
+            if pos_with_enemy:
                 advice = input('"You can attack or choose another figure:"\n\n"1 - to attack"\n"'
                                '0 - to choose another piece"\n')
                 if advice == "1":
-                    pos_resident.move(piece_position, self._pos_to_go(player))
+                    while True:
+                        new_position = input("Enter position to attack: ")
+                        try:
+                            if new_position not in pos_with_enemy:
+                                raise ValueError
+                            else:
+                                raise KeyError
+                        except ValueError:
+                                print("Wrong position!")
+                                continue
+                        except KeyError:
+                               pos_resident.move(pos_resident.position, new_position)
+                               break
                 else:
                     self.move_piece(player)
             else:
-                print("You cannot attack")
                 self.move_piece(player)
 
     def relocate_piece(self, piece, new_position):
@@ -269,10 +270,9 @@ class ChessSet:
         piece.position = new_position
         self.board.set_figure(new_position, piece)
 
-    def add_piece(self, old_piece, piece):
-        user = [user for user in self.players if user.color == old_piece.color][0]
+    def add_piece(self, old_piece, piece, player):
         new_piece = piece(self, old_piece.color, old_piece.position)
-        user.pl_pieces.extend([new_piece])
+        player.pl_pieces.extend([new_piece])
         self.pieces.extend([new_piece])
 
     def delete_piece(self, piece):
